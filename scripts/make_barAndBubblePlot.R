@@ -16,86 +16,26 @@ conflicts_prefer(cowplot::get_legend)
 conflicts_prefer(reshape2::melt)
 
 
-percentage_plot_fn = function(df,Altitude_){
-  the_plot_DF <<- df %>% filter(Altitude == Altitude_)
-  chainLengthSumDF = the_plot_DF %>% 
-    group_by(FA.length) %>% 
-    summarise(sum_same_length_intensity  = sum(median_intensity))
-  percentage_array = the_plot_DF %>% 
-    apply(.,1, function(x){
-      x <<- x
-      FA_length = x[which(names(x) == 'FA.length')]
-      the_median_intensity = x[which(names(x) == 'median_intensity')] %>% as.numeric()
-      sum_same_length_intensity = chainLengthSumDF %>% filter(FA.length == FA_length)  %>% mutate(sum_same_length_intensity = as.numeric(sum_same_length_intensity))
-      result = the_median_intensity/sum_same_length_intensity[1,2]
-      return(result)
-    }) %>% unlist
-  the_plot_DF$percentage = percentage_array
-  the_plot_DF$FA.length = factor(the_plot_DF$FA.length)
-  the_plot_DF <<- the_plot_DF
-  bar_color <<- 'YlGnBu'
-  p <- ggplot(the_plot_DF) +
-    geom_col(aes(x = FA.length, y = percentage,fill = FA.bond))+
-    scale_fill_distiller(name="bond number",palette=bar_color,direction = 1)+
-    labs(title=Altitude_, x='FA Chain Length', y='Median Intensity') +
-    theme_bw()+
-    xlim(c('14','15','16','17','18','20','22'))+
-    theme( axis.title=element_text(size=10,face="plain",color="black"),
-           axis.text = element_text(size=10,face="plain",color="black"),
-           panel.grid.minor = element_blank(),
-           panel.grid.major = element_blank(),
-           legend.background = element_blank(),
-           plot.title = element_text(hjust = 0.5))+
-    theme(legend.position = 'none')
-  return(p)
-}
-
-theme_georgia <- function(...) {
-  theme_gray(base_family = "Georgia", ...) + 
-    theme(plot.title = element_text(face = "bold"))
-}
-
-bubble_plot_FA_fn = function(df,Altitude_){
-  the_plot_DF <<-df  %>% filter(Altitude == Altitude_) %>% 
-    mutate(FA.length = as.character(FA.length))
-  FA_length_array = theQuanDF_combineFA$FA.length %>% table %>% names
+bubble_plot_FA_fn = function(df,group_){
+  df_ <<- df
+  the_plot_DF <<-df_  %>% filter(.,group == group_) %>% 
+    mutate(length = as.character(length))
+  FA_length_array = df_$length %>% table %>% names
   bubble_plot_color =  brewer.pal(length(FA_length_array), "Spectral")
   names(bubble_plot_color) = FA_length_array
   bubble_p= ggplot(the_plot_DF) +
-    aes(x = FA.length, y = FA.bond, colour = FA.length,    size = median_intensity  ) +  #atttention: is colour, not color!
+    aes(x = length, y = bond, colour = length,    size = value  ) +  #atttention: is colour, not color!
     geom_point(shape = "circle") +
     scale_color_manual(values=bubble_plot_color)+
-    labs(title=Altitude_, x='FA Chain Length', y='FA Chain Bond') +
+    labs(title=group_, x='Chain Length', y='Chain Bond') +
     theme_bw()+
     theme( axis.title=element_text(size=10,face="plain",color="black"),
            axis.text = element_text(size=10,face="plain",color="black"),
            legend.background = element_blank(),
            plot.title = element_text(hjust = 0.5))+
     theme(legend.position = 'none')+
-    scale_x_discrete(limits=theQuanDF_combineFA$FA.length %>% table %>% names) #get the FA length array,and set x axis
+    scale_x_discrete(limits=df_$Flength %>% table %>% names) #get the FA length array,and set x axis
   return(bubble_p)
-}
-
-bubble_plot_CL_fn = function(df,Altitude_){
-  the_plot_DF <<- df  %>% filter(Altitude == Altitude_) %>% 
-    mutate(CL_total_length = as.character(CL_total_length))
-  CL_length_array = theQuanDF_combineCL$CL_total_length %>% table %>% names
-  bubble_plot_color =  brewer.pal(length(CL_length_array), "Spectral")
-  names(bubble_plot_color) = CL_length_array
-  bubble_plot_cl= ggplot(the_plot_DF) +
-    aes(x = CL_total_length , y = CL_total_bond , colour = CL_total_length,    size = percentage  ) +  #atttention: is colour, not color!
-    geom_point(shape = "circle") +
-    scale_color_manual(values=bubble_plot_color)+
-    labs(title=Altitude_, x='FA Chain Length', y='FA Chain Bond') +
-    theme_bw()+
-    ylim(c(4,15))+
-    theme( axis.title=element_text(size=10,face="plain",color="black"),
-           axis.text = element_text(size=10,face="plain",color="black"),
-           legend.background = element_blank(),
-           plot.title = element_text(hjust = 0.5))+
-    theme(legend.position = 'none')+
-    scale_x_discrete(limits=CL_length_array) #get the FA length array,and set x axis
-  return(bubble_plot_cl)
 }
 #read file
 
@@ -150,11 +90,83 @@ median_group_level_DF_ = median_group_level_DF %>%
   # mutate(FA1 = str_extract(FA1,'(?<=\\d{2}:\\d)\\(\\d{2}:\\d|\\d{2}:\\d'))
 # median_group_level_DF_$FA1 %>% str_extract(.,'\\d{2}:\\d')
 
-write.csv(median_group_level_DF_, 'median_group_level_DF_.csv')
-median_group_level_DF_shoudong= read.csv()
+# write.csv(median_group_level_DF_, 'median_group_level_DF_.csv')
+median_group_level_DF_shoudong= read.csv('median_group_level_DF_.csv')
+# median_group_level_DF_shoudong = median_group_level_DF_shoudong %>% 
+#   separate(col = 'FA1', sep = ':',into = c('FA1_length','FA1_bond'),remove = F) %>% 
+#   separate(col = 'FA2', sep = ':',into = c('FA2_length','FA2_bond'),remove = F) 
+
+DF_ = median_group_level_DF_shoudong %>% group_split(lipid_class) 
+
+theDF = DF_[[1]] %>% select(-c(Species,lipid_class,FA2)) %>% 
+  melt() %>% rename('group' = 'variable','FA' = 'FA1') %>% relocate(group) %>% 
+  separate(.,col = FA, sep = ':', into =c('length','bond'))
 # aa = median_group_level_DF_ %>% filter(lipid_class == 'CL') %>% select(Species) %>%unlist %>%  lapply(., function(x){
 #   str_split(x, '\\(')[[1]][1] 
 # }) %>% do.call(rbind,.) %>% as.array()   #for test if exist non-unique CL
+bubble_plot_FA_fn(theDF,'E11')
+
+bubble_plot_list <- names(median_group_level_DF_shoudong)[3:] %>% table %>% names %>% map(~ bubble_plot_FA_fn(theQuanDF_combineFA,.x))
+bubble_plot_forlegend = ggplot(the_plot_DF) +
+  aes(x = FA.length, y = FA.bond, colour = FA.length,    size = median_intensity  ) +  #atttention: is colour, not color!
+  geom_point(shape = "circle") +
+  scale_color_brewer(palette = "Spectral", direction = 1)+
+  theme_bw()+
+  scale_x_discrete(limits=theQuanDF_combineFA$FA.length %>% table %>% names)+
+  guides(size = 'none')  #only delete the legend of size(median_intensity)
+
+combined_bubble_plot <- grid.arrange(grobs= bubble_plot_list,nrow = 2)#,right = get_legend(bubble_plot_forlegend))
+result_bubble_plot <<- plot_grid(title_gg,combined_bubble_plot,  ncol = 1, rel_heights = c(0.1, 1))
+ggsave(paste('./mls_result/bubblePlot/',organ_name,'_FA_level.pdf',sep = ''),result_bubble_plot,width = 8,height = 6)
+
+1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 str_extract('PC38:5','(?<=\\d{2}:\\d\\()\\d{2}:\\d')
