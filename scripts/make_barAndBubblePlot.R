@@ -139,8 +139,16 @@ median_group_level_DF = median_group_level_DF %>%
   mutate(lipid_class = filtered_class_df$lipid_class) %>% 
   relocate(Species,lipid_class)
 
-
-
+median_group_level_DF_ = median_group_level_DF %>%  
+  rowwise %>% 
+  mutate(FA1 = case_when(!grepl('[_/]',Species) ~ Species,
+                          grepl('[_/]',Species) ~ str_split(Species,pattern = '[_/]')[[1]][1])) %>% 
+  mutate(FA2 = case_when(!grepl('[_/]',Species) ~ NA,
+                         grepl('[_/]',Species) ~ str_split(Species,pattern = '[_/]')[[1]][2]))
+  
+# aa = median_group_level_DF_ %>% filter(lipid_class == 'CL') %>% select(Species) %>%unlist %>%  lapply(., function(x){
+#   str_split(x, '\\(')[[1]][1] 
+# }) %>% do.call(rbind,.) %>% as.array()   #for test if exist non-unique CL
 
 
 
