@@ -144,14 +144,20 @@ median_group_level_DF_ = median_group_level_DF %>%
   mutate(FA1 = case_when(!grepl('[_/]',Species) ~ Species,
                           grepl('[_/]',Species) ~ str_split(Species,pattern = '[_/]')[[1]][1])) %>% 
   mutate(FA2 = case_when(!grepl('[_/]',Species) ~ NA,
-                         grepl('[_/]',Species) ~ str_split(Species,pattern = '[_/]')[[1]][2]))
-  
+                         grepl('[_/]',Species) ~ str_split(Species,pattern = '[_/]')[[1]][2])) %>% 
+  mutate(FA1 = str_replace(Species,'p','')) %>% 
+  mutate(FA_meiyong = str_extract(Species,'(?<=\\d{2}:\\d\\()\\d{2}:\\d'))
+  # mutate(FA1 = str_extract(FA1,'(?<=\\d{2}:\\d)\\(\\d{2}:\\d|\\d{2}:\\d'))
+# median_group_level_DF_$FA1 %>% str_extract(.,'\\d{2}:\\d')
+
+write.csv(median_group_level_DF_, 'median_group_level_DF__.csv')
+median_group_level_DF_shoudong= read.csv()
 # aa = median_group_level_DF_ %>% filter(lipid_class == 'CL') %>% select(Species) %>%unlist %>%  lapply(., function(x){
 #   str_split(x, '\\(')[[1]][1] 
 # }) %>% do.call(rbind,.) %>% as.array()   #for test if exist non-unique CL
 
 
-
+str_extract('PC38:5','(?<=\\d{2}:\\d\\()\\d{2}:\\d')
 
 # 创建一个包含文本的向量
 text <- c("This is a PC", "There are LPC here", "The PC is not here", "The PS is not here")
