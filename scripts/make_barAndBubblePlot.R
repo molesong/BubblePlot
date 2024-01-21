@@ -150,7 +150,7 @@ median_group_level_DF_ = median_group_level_DF %>%
   # mutate(FA1 = str_extract(FA1,'(?<=\\d{2}:\\d)\\(\\d{2}:\\d|\\d{2}:\\d'))
 # median_group_level_DF_$FA1 %>% str_extract(.,'\\d{2}:\\d')
 
-write.csv(median_group_level_DF_, 'median_group_level_DF__.csv')
+write.csv(median_group_level_DF_, 'median_group_level_DF_.csv')
 median_group_level_DF_shoudong= read.csv()
 # aa = median_group_level_DF_ %>% filter(lipid_class == 'CL') %>% select(Species) %>%unlist %>%  lapply(., function(x){
 #   str_split(x, '\\(')[[1]][1] 
