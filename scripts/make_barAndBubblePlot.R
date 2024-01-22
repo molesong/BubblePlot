@@ -11,13 +11,14 @@ library(cowplot)
 library(gridExtra) #grid.arrange function
 library(data.table)
 library(tidyverse)
-
+library(RColorBrewer)
 conflicts_prefer(cowplot::get_legend)
 conflicts_prefer(reshape2::melt)
 
 
 bubble_plot_FA_fn = function(df,group_){
   df_ <<- df
+  group_ <<- group_
   the_plot_DF <<-df_  %>% filter(.,group == group_) %>% 
     mutate(length = as.character(length))
   FA_length_array = df_$length %>% table %>% names
@@ -92,10 +93,11 @@ median_group_level_DF_ = median_group_level_DF %>%
 
 # write.csv(median_group_level_DF_, 'median_group_level_DF_.csv')
 median_group_level_DF_shoudong= read.csv('median_group_level_DF_.csv')
+median_group_level_DF_shoudong = median_group_level_DF_shoudong %>% arrange(lipid_class)
 # median_group_level_DF_shoudong = median_group_level_DF_shoudong %>% 
 #   separate(col = 'FA1', sep = ':',into = c('FA1_length','FA1_bond'),remove = F) %>% 
 #   separate(col = 'FA2', sep = ':',into = c('FA2_length','FA2_bond'),remove = F) 
-
+lipid_array = median_group_level_DF_shoudong %>% select(lipid_class)  %>% distinct %>% 
 DF_ = median_group_level_DF_shoudong %>% group_split(lipid_class) 
 
 theDF = DF_[[1]] %>% select(-c(Species,lipid_class,FA2)) %>% 
@@ -105,8 +107,20 @@ theDF = DF_[[1]] %>% select(-c(Species,lipid_class,FA2)) %>%
 #   str_split(x, '\\(')[[1]][1] 
 # }) %>% do.call(rbind,.) %>% as.array()   #for test if exist non-unique CL
 bubble_plot_FA_fn(theDF,'E11')
+for(lipid_class_index in 1:length(DF_)){
+  lipid_class_name = 
+  theDF = DF_[[lipid_class_index]] %>% select(-c(Species,lipid_class,FA2)) %>% 
+    melt() %>% rename('group' = 'variable','FA' = 'FA1') %>% relocate(group) %>% 
+    separate(.,col = FA, sep = ':', into =c('length','bond'))
+  bubble_plot_list <- c("E11", "E12","E14","E17","P0","P1", "P7", "P21" ) %>% map(~ bubble_plot_FA_fn(theDF,.x))
+  combined_bubble_plot <- grid.arrange(grobs= bubble_plot_list,nrow = 2)#,right = get_legend(bubble_plot_forlegend))
+  ggsave(paste('./mls_result/bubblePlot/',organ_name,'_FA_level.pdf',sep = ''),result_bubble_plot,width = 8,height = 6)
+  
+}
 
-bubble_plot_list <- names(median_group_level_DF_shoudong)[3:] %>% table %>% names %>% map(~ bubble_plot_FA_fn(theQuanDF_combineFA,.x))
+bubble_plot_list <- names(median_group_level_DF_shoudong)[3:10] %>% table %>% names %>%
+  factor(.,levels = c("E11", "E12","E14","E17","P0","P1", "P7", "P21" )) %>% 
+  map(~ bubble_plot_FA_fn(median_group_level_DF_shoudong,.x))
 bubble_plot_forlegend = ggplot(the_plot_DF) +
   aes(x = FA.length, y = FA.bond, colour = FA.length,    size = median_intensity  ) +  #atttention: is colour, not color!
   geom_point(shape = "circle") +
