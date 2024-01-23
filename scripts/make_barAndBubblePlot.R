@@ -22,12 +22,12 @@ bubble_plot_FA_fn = function(df,group_){
   the_plot_DF <<-df_  %>% filter(.,group == group_) %>% 
     mutate(length = as.character(length))
   FA_length_array = df_$length %>% table %>% names
-  bubble_plot_color =  brewer.pal(length(FA_length_array), "Spectral")
-  names(bubble_plot_color) = FA_length_array
+  # bubble_plot_color =  brewer.pal(length(FA_length_array), "Spectral")
+  # names(bubble_plot_color) = FA_length_array
   bubble_p= ggplot(the_plot_DF) +
     aes(x = length, y = bond, colour = length,    size = value  ) +  #atttention: is colour, not color!
     geom_point(shape = "circle") +
-    scale_color_manual(values=bubble_plot_color)+
+    # scale_color_manual(values=bubble_plot_color)+
     labs(title=group_, x='Chain Length', y='Chain Bond') +
     theme_bw()+
     theme( axis.title=element_text(size=10,face="plain",color="black"),
@@ -35,7 +35,9 @@ bubble_plot_FA_fn = function(df,group_){
            legend.background = element_blank(),
            plot.title = element_text(hjust = 0.5))+
     theme(legend.position = 'none')+
-    scale_x_discrete(limits=df_$Flength %>% table %>% names) #get the FA length array,and set x axis
+    scale_x_discrete(limits=df_$length %>% table %>% names %>% unique) + #get the FA length array,and set x axis
+    scale_y_discrete(limits=df_$bond %>% table %>% names %>% unique %>% as.numeric %>% sort %>%  as.character) 
+    
   return(bubble_p)
 }
 #read file
@@ -97,26 +99,36 @@ median_group_level_DF_shoudong = median_group_level_DF_shoudong %>% arrange(lipi
 # median_group_level_DF_shoudong = median_group_level_DF_shoudong %>% 
 #   separate(col = 'FA1', sep = ':',into = c('FA1_length','FA1_bond'),remove = F) %>% 
 #   separate(col = 'FA2', sep = ':',into = c('FA2_length','FA2_bond'),remove = F) 
-lipid_array = median_group_level_DF_shoudong %>% select(lipid_class)  %>% distinct %>% 
+lipid_array = median_group_level_DF_shoudong %>% select(lipid_class)  %>% distinct %>% array %>% .[[1]]
 DF_ = median_group_level_DF_shoudong %>% group_split(lipid_class) 
 
-theDF = DF_[[1]] %>% select(-c(Species,lipid_class,FA2)) %>% 
-  melt() %>% rename('group' = 'variable','FA' = 'FA1') %>% relocate(group) %>% 
-  separate(.,col = FA, sep = ':', into =c('length','bond'))
+# theDF = DF_[[1]] %>% select(-c(Species,lipid_class,FA2)) %>% 
+#   melt() %>% rename('group' = 'variable','FA' = 'FA1') %>% relocate(group) %>% 
+#   separate(.,col = FA, sep = ':', into =c('length','bond'))
 # aa = median_group_level_DF_ %>% filter(lipid_class == 'CL') %>% select(Species) %>%unlist %>%  lapply(., function(x){
 #   str_split(x, '\\(')[[1]][1] 
 # }) %>% do.call(rbind,.) %>% as.array()   #for test if exist non-unique CL
-bubble_plot_FA_fn(theDF,'E11')
+# bubble_plot_FA_fn(theDF,'E11')
 for(lipid_class_index in 1:length(DF_)){
-  lipid_class_name = 
-  theDF = DF_[[lipid_class_index]] %>% select(-c(Species,lipid_class,FA2)) %>% 
-    melt() %>% rename('group' = 'variable','FA' = 'FA1') %>% relocate(group) %>% 
-    separate(.,col = FA, sep = ':', into =c('length','bond'))
-  bubble_plot_list <- c("E11", "E12","E14","E17","P0","P1", "P7", "P21" ) %>% map(~ bubble_plot_FA_fn(theDF,.x))
-  combined_bubble_plot <- grid.arrange(grobs= bubble_plot_list,nrow = 2)#,right = get_legend(bubble_plot_forlegend))
-  ggsave(paste('./mls_result/bubblePlot/',organ_name,'_FA_level.pdf',sep = ''),result_bubble_plot,width = 8,height = 6)
   
+  lipid_class_name <<- lipid_array[lipid_class_index]
+    theDF = DF_[[lipid_class_index]] %>% select(-c(Species,lipid_class,FA2)) %>% 
+      melt() %>% rename('group' = 'variable','FA' = 'FA1') %>% relocate(group) %>% 
+      separate(.,col = FA, sep = ':', into =c('length','bond'))
+    bubble_plot_list <- c("E11", "E12","E14","E17","P0","P1", "P7", "P21" ) %>% map(~ bubble_plot_FA_fn(theDF,.x))
+    combined_bubble_plot <- grid.arrange(grobs= bubble_plot_list,nrow = 2, top = lipid_class_name)#,right = get_legend(bubble_plot_forlegend))
+    ggsave(paste('./output/',lipid_class_name,'.pdf',sep = ''),combined_bubble_plot,width = 12,height = 6)
 }
+11
+
+
+
+
+
+
+
+
+
 
 bubble_plot_list <- names(median_group_level_DF_shoudong)[3:10] %>% table %>% names %>%
   factor(.,levels = c("E11", "E12","E14","E17","P0","P1", "P7", "P21" )) %>% 
